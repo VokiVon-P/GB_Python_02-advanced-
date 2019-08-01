@@ -46,8 +46,8 @@ def write_to_csv(filename):
     except Exception as err:
                 print(f"Ошибка записи файла {filename}\n", err)
 
-# TODO расскомментироваь
-#  write_to_csv("test_cvs_write.csv")
+# запись в CSV    
+write_to_csv("test_cvs_write.csv")
 
 """
 Задание на закрепление знаний по модулю json. 
@@ -107,5 +107,45 @@ def write_order_to_json(item, quantity, price, buyer, date):
 
 
 # запись в JSON    
-# TODO расскомментироваь
-# write_order_to_json("Лопата", 10, 100, "Петрович", str(datetime.date.today())) 
+write_order_to_json("Лопата", 10, 100, "Петрович", str(datetime.date.today())) 
+
+"""
+Задание на закрепление знаний по модулю yaml. Написать скрипт, автоматизирующий сохранение данных в файле YAML-формата. 
+Для этого:
+Подготовить данные для записи в виде словаря, в котором первому ключу соответствует список, 
+второму — целое число, третьему — вложенный словарь, где значение каждого ключа — это целое число с юникод-символом, 
+отсутствующим в кодировке ASCII (например, €);
+Реализовать сохранение данных в файл формата YAML — например, в файл file.yaml. 
+При этом обеспечить стилизацию файла с помощью параметра default_flow_style, 
+а также установить возможность работы с юникодом: allow_unicode = True;
+Реализовать считывание данных из созданного файла и проверить, совпадают ли они с исходными.
+"""
+import yaml
+from pprint import pprint
+
+def test_yaml():
+
+    list_test = ['list_i_1',
+                'list_i_2',
+                'list_i_3']
+
+    int_item = 100
+
+    dict_item = {}
+    for i in range(10,51,10):
+        key = str(i)
+        dict_item[key] = key+u"'€'"
+
+    data_to_yaml = {'key_list':list_test, 'key_int':int_item, 'key_dict':dict_item}
+
+    filename = 'test.yaml'
+    try:
+        with open(filename, 'w') as f_n:
+            yaml.dump(data_to_yaml, f_n, allow_unicode=True, default_flow_style=False)
+
+    except Exception as err:
+                print(f"Ошибка записи файла {filename}\n", err)      
+
+
+# запись в YAML        
+test_yaml()
