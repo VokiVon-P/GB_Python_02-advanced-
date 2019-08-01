@@ -53,7 +53,7 @@ def get_data():
     for fname in f_names:
         read_one_file(fname)
 
-    print(main_data)
+    #print(main_data)
     return main_data
 
 
@@ -156,18 +156,24 @@ def test_yaml():
     dict_item = {}
     for i in range(10,51,10):
         key = str(i)
-        dict_item[key] = key+u"'€'"
+        dict_item[key] = key+u"€"
 
     data_to_yaml = {'key_list':list_test, 'key_int':int_item, 'key_dict':dict_item}
+    pprint(data_to_yaml)
+    print('----------------------------------\n\n')
 
     filename = 'test.yaml'
     try:
         with open(filename, 'w') as f_n:
             yaml.dump(data_to_yaml, f_n, allow_unicode=True, default_flow_style=False)
 
+        with open(filename) as f_n:
+            data = yaml.load(f_n)
+            pprint(data)                    
+
     except Exception as err:
                 print(f"Ошибка записи файла {filename}\n", err)      
 
-
+    
 # запись в YAML        
 test_yaml()
