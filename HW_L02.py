@@ -1,5 +1,7 @@
 import re
 import csv
+
+
 def get_data():
 
     patterns = [re.compile("(Изготовитель системы:).*"),
@@ -11,11 +13,11 @@ def get_data():
     main_data =  [ headers ]
     f_names = ["data/info_1.txt", "data/info_2.txt", "data/info_3.txt"]
 
+
     def read_one_file(filename):
         with open(filename, 'rt') as myfile:
             try:
                 data = myfile.read()
-
                 tmp_list = []
                 for ptrn in patterns:
                     mr = ptrn.search(data)
@@ -27,6 +29,7 @@ def get_data():
             except Exception as err:
                 print(f"Ошибка чтения файла {filename}\n", err)
 
+
     for fname in f_names:
         read_one_file(fname)
 
@@ -35,9 +38,14 @@ def get_data():
 
 
 def write_to_csv(filename):
-    with open(filename, 'w') as f_n:
-        f_n_writer = csv.writer(f_n)
-        f_n_writer.writerows(get_data())
-    
+    try:
+        with open(filename, 'w') as f_n:
+            f_n_writer = csv.writer(f_n)
+            f_n_writer.writerows(get_data())
+
+    except Exception as err:
+                print(f"Ошибка записи файла {filename}\n", err)
+
+
 
 write_to_csv("test_cvs_write.csv")
