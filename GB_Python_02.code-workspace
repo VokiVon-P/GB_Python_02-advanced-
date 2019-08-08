@@ -1,0 +1,10 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.pythonPath": "prj_gb_python_02\\Scripts\\python.exe"
+	}
+}
