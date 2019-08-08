@@ -99,18 +99,29 @@ if __name__ == '__main__':
         '''
         to_send = data.encode('utf-8')
         sock.send(to_send)
-        print(f'Client send data:\n{to_send}')
+        print(f'\nClient send data:\n{to_send}')
         '''
         Принимаем ответ сервера
         '''
         bytes_response = sock.recv(config.get('buffersize'))
-        print(f'Client recieve data:\n{bytes_response}\n')
-
-        print(bytes_response.decode('utf-8'))
-        '''
-        Закрываем сокет
-        '''
-        sock.close()
+        print(f'\nClient recieve data:\n{bytes_response}')
+        msg = bytes_response.decode('utf-8')
+        print(f'\nДанные от сервера:\n {msg} \n')
+        try:
+            data = json.loads(msg)
+            if data['response'] == 200:
+                print(f'Ответ сервера: OK')
+                print(f'Сообщение от сервера: {data["alert"]}')
+            else:
+                print(f'Ответ сервера: {data["response"]}')
+                print(f'Сообщение от сервера: {data["error"]}')
+        except Exception as e: 
+            print(f'Произошла ошибка при разборе ответа сервера: {str(e)}')
+        finally:
+            '''
+            Закрываем сокет
+            '''
+            sock.close()
         
     except KeyboardInterrupt:
         '''

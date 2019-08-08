@@ -3,6 +3,7 @@ import json
 import socket
 from argparse import ArgumentParser
 from pprint import pprint
+from datetime import datetime as dt
 
 
 '''
@@ -13,6 +14,19 @@ config = {
     'port': 8000,
     'buffersize': 1024
 }
+
+ok_msg = {
+    "response": 200,
+    "alert":"OK"
+}
+
+err_msg = {
+    "response": 400,
+    "error": u"неправильный запрос/JSON-объект"
+}
+
+presense_msg = 'presence'
+
 
 '''
 Создаём объект парсера аргументов командной строки
@@ -34,7 +48,7 @@ parser.add_argument(
 https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.parse_args
 '''
 args = parser.parse_args()
-pprint(config)
+
 '''
 Обновляем конфигурацию на основе словаря
 Подробнее о словарях python можно узнать здесь:
@@ -45,8 +59,7 @@ if args.config:
         file_config = yaml.safe_load(file)
         config.update(file_config or {})
 
-pprint(config)
-
+       
 host, port = config.get('host'), config.get('port')
 
 '''
@@ -85,16 +98,35 @@ if __name__ == '__main__':
             '''
             bytes_request = client.recv(config.get('buffersize'))
             msg = bytes_request.decode('utf-8')
-            print(f'Client send message {msg}')
-            
-            '''
-            Отправляем ответ клиенту
-            '''
-            client.send(bytes_request)
-            '''
-            Закрываем клиентский сокет
-            '''
-            client.close()
+            print(f'Client send message:\n{msg}')
+
+            # Разбираем что пришло от клиента
+            try:
+                data = json.loads(msg, parse_float=float)
+                
+                if data["action"] == presense_msg:
+                    user_name = data.get('user').get('account_name')
+                    ok_msg['alert'] = f"Привет тебе {user_name}"
+                    msg = json.dumps(ok_msg, ensure_ascii=False)
+                    print(f'Server send message to client {user_name}:\n{msg}')
+                    bytes_send = msg.encode('utf-8')
+                else:
+                    #bytes_send = bytes_request
+                    raise Exception(f'Ожидалась команда: {presense_msg}')
+            except Exception as e:
+                err_msg['error'] += f" [{str(e)}]" 
+                msg = json.dumps(err_msg, ensure_ascii=False)
+                print(f'Server send message to client:\n{msg}')
+                bytes_send = msg.encode('utf-8')    
+            finally:
+                '''
+                Отправляем ответ клиенту
+                '''
+                client.send(bytes_send)
+                '''
+                Закрываем клиентский сокет
+                '''
+                client.close()
     except KeyboardInterrupt:
         '''
         В случае нажатия сочетания клавиш Ctrl+C(Ctrl+Backspace на windows)
