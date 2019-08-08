@@ -4,6 +4,7 @@ import socket
 from argparse import ArgumentParser
 from pprint import pprint
 from datetime import datetime as dt
+import jim_helper as jh
 
 
 '''
@@ -97,27 +98,27 @@ if __name__ == '__main__':
             Принимаем запрос клиента
             '''
             bytes_request = client.recv(config.get('buffersize'))
-            msg = bytes_request.decode('utf-8')
-            print(f'Client send message:\n{msg}')
 
             # Разбираем что пришло от клиента
             try:
-                data = json.loads(msg, parse_float=float)
+                msg, data = jh.recv_json(bytes_request)
+                print(f'Client send message:\n{msg}')
                 
                 if data["action"] == presense_msg:
                     user_name = data.get('user').get('account_name')
                     ok_msg['alert'] = f"Привет тебе {user_name}"
-                    msg = json.dumps(ok_msg, ensure_ascii=False)
+
+                    msg, bytes_send  = jh.send_json(ok_msg)
                     print(f'Server send message to client {user_name}:\n{msg}')
-                    bytes_send = msg.encode('utf-8')
+                
                 else:
-                    #bytes_send = bytes_request
                     raise Exception(f'Ожидалась команда: {presense_msg}')
+
             except Exception as e:
                 err_msg['error'] += f" [{str(e)}]" 
-                msg = json.dumps(err_msg, ensure_ascii=False)
+                msg, bytes_send  = jh.send_json(err_msg)
                 print(f'Server send message to client:\n{msg}')
-                bytes_send = msg.encode('utf-8')    
+                
             finally:
                 '''
                 Отправляем ответ клиенту
@@ -133,3 +134,7 @@ if __name__ == '__main__':
         обрабатываем завершение работы сервера
         '''
         print('Server shutdown')
+
+
+
+        

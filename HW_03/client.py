@@ -3,6 +3,7 @@ import json
 import socket
 from argparse import ArgumentParser
 from datetime import datetime as dt
+import jim_helper as jh
 
 
 '''
@@ -88,16 +89,16 @@ if __name__ == '__main__':
 
         print('Client was started')
 
-        #
-
+        # установим время
         presense_msg['time'] = dt.utcnow().timestamp()
-        data = json.dumps(presense_msg, ensure_ascii=False, indent=4)
-        print(f'Данные к отправке:\n{data}')
+
+        # подготовим данные к отправке
+        msg, to_send = jh.send_json(presense_msg)
+        print(f'Сообщение к отправке:\n{msg}')
         
         '''
         Отправляем данные на сервер
         '''
-        to_send = data.encode('utf-8')
         sock.send(to_send)
         print(f'\nClient send data:\n{to_send}')
         '''
@@ -105,10 +106,12 @@ if __name__ == '__main__':
         '''
         bytes_response = sock.recv(config.get('buffersize'))
         print(f'\nClient recieve data:\n{bytes_response}')
-        msg = bytes_response.decode('utf-8')
-        print(f'\nДанные от сервера:\n {msg} \n')
+
+       
         try:
-            data = json.loads(msg)
+            msg, data = jh.recv_json(bytes_response)
+            print(f'\nДанные от сервера:\n {msg} \n')
+            
             if data['response'] == 200:
                 print(f'Ответ сервера: OK')
                 print(f'Сообщение от сервера: {data["alert"]}')
