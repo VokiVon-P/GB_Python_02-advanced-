@@ -1,3 +1,4 @@
 /.vscode/
 /.ipynb_checkpoints/
 /prj_gb_python_02
+__pycache__
