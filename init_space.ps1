@@ -1,0 +1,1 @@
+prj_gb_python_02/scripts/activate.ps1
