@@ -6,7 +6,13 @@ from functools import reduce
 """
 from settings import INSTALLED_APPS
 
+from decorators import log_call_info
 
+"""
+Добавил декоратор для теста
+"""
+
+@log_call_info
 def get_server_action():
     # импортируем файл routes из каждого модуля
     applications = reduce(

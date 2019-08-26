@@ -18,22 +18,22 @@ def logged(log_format):
 
 
 
-
-
 def log_call_info(func):
     """
-    TODO:
-    первая версия - дополнить 
+    TODO: сделать независимой от порядка вызова других декораторов 
+    ------пока должна быть верхней в списке декораторов
+
     Фиксирует обращение к декорируемой функции
-    Логирут имя и аргументы
+    Логирует имя, аргументы и откуда была вызвана функция
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print(getattr(func, '__name__', '< >'))
-        print('%(args)s', args) 
-        print('%'*50)
-        # print(sys._getframe().f_back.f_code.co_name) 
+        f_name = getattr(func, '__name__', '< >')
+        # довольно коряво - но работает
+        f_from = sys._getframe().f_back.f_code.co_name
+        
+        logger.debug(f'Функция: {f_name} вызвана из функции: {f_from} с аргументами: {args} ')
         result = func(*args, **kwargs)
         return result
-   
+
     return wrapper
