@@ -1,3 +1,4 @@
 jupyter
 chardet
 pyyaml
+pytest
