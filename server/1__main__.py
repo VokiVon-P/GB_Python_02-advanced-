@@ -39,12 +39,10 @@ logging.basicConfig(
     )
 )
 
-requests = []
-
-connnections = []
-
 host, port = config.get('host'), config.get('port')
 
+requests = []
+connnections = []
 
 try:
     sock = socket.socket()
@@ -57,28 +55,28 @@ try:
 
     while True:
         try:
-            a = sock.accept()
             client, address = sock.accept()
             client_host, client_port = address
             logging.info(f'Client was detected {client_host}:{client_port}')
             connnections.append(client)
-        except Exception as e:
-            logging.error(f'Server exception: {e}')
-            break
+        except:
+            #TODO добавить обработчик!
+            pass
 
         rlist, wlist, xlist = select.select(
             connnections, connnections, connnections, 0
         )
-
+ 
         for read_client in rlist:
             bytes_request = read_client.recv(config.get('buffersize'))
-            requests.append(bytes_request)
+            requests.append(bytes_request) 
 
         if requests:
             bytes_request = requests.pop()
             bytes_response = handle_tcp_request(bytes_request)
 
             for write_client in wlist:
-                write_client.send(bytes_response)
+                write_client.send(bytes_response)                       
+
 except KeyboardInterrupt:
     logging.info('Server shutdown')

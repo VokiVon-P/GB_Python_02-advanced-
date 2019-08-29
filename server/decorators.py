@@ -1,5 +1,6 @@
 import logging
 from functools import wraps
+from protocol import make_response
 
 import sys 
 
@@ -15,6 +16,15 @@ def logged(log_format):
             return response
         return wrapper
     return decorator
+
+
+def login_requeired(func):
+    @wraps(func)
+    def wrapper(request):
+        if 'token' in request and request.get('token'):
+            return func(request)
+        return make_response(request, 401, 'Authentication required')
+    return wrapper
 
 
 
