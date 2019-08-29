@@ -1,6 +1,7 @@
 import yaml
 import json
 import socket
+import logging
 from argparse import ArgumentParser
 
 from protocol import validate_request, make_response
@@ -27,6 +28,15 @@ if args.config:
         file_config = yaml.safe_load(file)
         config.update(file_config or {})
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=(
+        logging.FileHandler('server.log'),
+        logging.StreamHandler()
+    )
+)
+
 host, port = config.get('host'), config.get('port')
 
 
@@ -35,12 +45,12 @@ try:
     sock.bind((host, port))
     sock.listen(5)
 
-    print(f'Server started with {host}:{port}')
+    logging.info(f'Server started with {host}:{port}')
 
     while True:
         client, address = sock.accept()
         client_host, client_port = address
-        print(f'Client was detected {client_host}:{client_port}')
+        logging.info(f'Client was detected {client_host}:{client_port}')
 
         bytes_request = client.recv(config.get('buffersize'))
 
@@ -54,22 +64,22 @@ try:
             if controller:
                 try:
                     response = controller(request)
-                    print(f'Client {host}:{port} send request {request}')
+                    logging.debug(f'Client {host}:{port} send request {request}')
                 except Exception as err:
                     response = response = make_response(
                         request, 500, f'Internal server error'
                     )
-                    print(f'Exception - {err}')
+                    logging.critical(f'Exception - {err}')
             else:
                 response = response = make_response(
                     request, 404, f'Action {action} is not supported'
                 )
-                print(f'Client {host}:{port} call action with name {action}')
+                logging.error(f'Client {host}:{port} call action with name {action}')
         else:
             response = make_response(
                 request, 400, 'Wrong request'
             )
-            print(f'Client {host}:{port} send wrong request {request}')
+            logging.error(f'Client {host}:{port} send wrong request {request}')
         
         string_response = json.dumps(response)
 
@@ -77,4 +87,4 @@ try:
         
         client.close()
 except KeyboardInterrupt:
-    print('Server shutdown')
+    logging.info('Server shutdown')

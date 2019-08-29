@@ -2,4 +2,5 @@
 /.ipynb_checkpoints/
 /prj_gb_python_02
 __pycache__
-
+.pytest_cache
+server.log
