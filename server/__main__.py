@@ -50,6 +50,7 @@ try:
     sock = socket.socket()
     sock.bind((host, port))
     sock.setblocking(False)
+    #ERROR - Server exception: [WinError 10035] Операция на незаблокированном сокете не может быть завершена немедленно
     sock.settimeout(0)
     sock.listen(5)
 
@@ -57,7 +58,6 @@ try:
 
     while True:
         try:
-            a = sock.accept()
             client, address = sock.accept()
             client_host, client_port = address
             logging.info(f'Client was detected {client_host}:{client_port}')
@@ -80,5 +80,6 @@ try:
 
             for write_client in wlist:
                 write_client.send(bytes_response)
+
 except KeyboardInterrupt:
     logging.info('Server shutdown')
