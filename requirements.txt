@@ -2,4 +2,4 @@ jupyter
 chardet
 pyyaml
 pytest
-pytest -cov
+pytest-cov
