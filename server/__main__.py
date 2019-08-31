@@ -3,11 +3,28 @@ import json
 import socket
 import select
 import logging
+import threading
 from argparse import ArgumentParser
-
 from protocol import validate_request, make_response
 from handlers import handle_tcp_request
 from resolvers import resolve
+
+
+# функция для чтения запроса для вызова в отдельном потоке
+def read(sock, connections, requests, buffersize):
+    try:
+        bytes_request = sock.recv(buffersize)
+    except Exception:
+        connections.remove(sock)
+    else:
+        requests.append(bytes_request)
+
+# функция для записи ответа сервера для вызова в отдельном потоке
+def write(sock, connction, response):
+    try:
+        sock.send(response)
+    except Exception:
+        connction.remove(sock)
 
 
 config = {
@@ -39,10 +56,9 @@ logging.basicConfig(
     )
 )
 
+
 requests = []
-
 connnections = []
-
 host, port = config.get('host'), config.get('port')
 
 
@@ -51,7 +67,7 @@ try:
     sock.bind((host, port))
     sock.setblocking(False)
     #ERROR - Server exception: [WinError 10035] Операция на незаблокированном сокете не может быть завершена немедленно
-    sock.settimeout(0)
+    sock.settimeout(1)
     sock.listen(5)
 
     logging.info(f'Server started with {host}:{port}')
@@ -63,23 +79,30 @@ try:
             logging.info(f'Client was detected {client_host}:{client_port}')
             connnections.append(client)
         except Exception as e:
-            logging.error(f'Server exception: {e}')
-            break
+            # логирование для отладки при необходимости
+            # logging.error(f'Server exception: {e}')
+            pass
+        if connnections:
+            rlist, wlist, xlist = select.select(
+                connnections, connnections, connnections, 0
+            )
+            # паралельная обработка запросов на чтение запросов из буфера
+            for read_client in rlist:
+                read_thread = threading.Thread(target=read, daemon=True, args=(
+                    read_client, connnections, requests, config.get('buffersize')
+                ))
+                read_thread.start()
+            
+            # паралельная обработка запросов за запись ответов сервера
+            if requests:
+                bytes_request = requests.pop()
+                bytes_response = handle_tcp_request(bytes_request)
 
-        rlist, wlist, xlist = select.select(
-            connnections, connnections, connnections, 0
-        )
-
-        for read_client in rlist:
-            bytes_request = read_client.recv(config.get('buffersize'))
-            requests.append(bytes_request)
-
-        if requests:
-            bytes_request = requests.pop()
-            bytes_response = handle_tcp_request(bytes_request)
-
-            for write_client in wlist:
-                write_client.send(bytes_response)
+                for write_client in wlist:
+                    write_thread = threading.Thread(target=write, daemon=True, args=(
+                        write_client, connnections, bytes_response
+                    ))
+                    write_thread.start()
 
 except KeyboardInterrupt:
     logging.info('Server shutdown')

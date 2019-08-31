@@ -1,16 +1,27 @@
 import yaml
 import json
+import zlib
 import socket
+import hashlib
+import threading
 from datetime import datetime
 from argparse import ArgumentParser
 
 
-def make_request(action, data):
+def make_request(action, data, token=None):
     return {
         'action': action,
         'data': data,
-        'time': datetime.now().timestamp()
+        'time': datetime.now().timestamp(),
+        'token': token
     }
+
+# функция для чтения ответа от сервера для использования в отдельном потоке
+def read(sock, buffersize):
+    while True:
+        compressed_response = sock.recv(buffersize)
+        bytes_response = zlib.decompress(compressed_response)
+        print(bytes_response.decode())
 
 
 config = {
@@ -27,11 +38,11 @@ parser.add_argument(
 )
 parser.add_argument(
     '-ht', '--host', type=str, required=False,
-    help='Sets server host'
+    help='Sets client host'
 )
 parser.add_argument(
     '-p', '--port', type=int, required=False,
-    help='Sets server port'
+    help='Sets client port'
 )
 
 args = parser.parse_args()
@@ -53,19 +64,25 @@ if __name__ == '__main__':
         sock.connect((config.get('host'), config.get('port')))
 
         print('Client was started')
+        # чтение ответов сервера в отдельном потоке
+        thread = threading.Thread(target=read, args=(sock, config.get('buffersize')))
+        thread.start()
 
-        action = input('Enter action: ')
-        data = input('Enter data: ')
+        while True:
+            action = input('Enter action: ')
+            data = input('Enter data: ')
 
-        request = make_request(action, data)
+            hash_obj = hashlib.sha256()
+            hash_obj.update(
+                str(datetime.now().timestamp()).encode()
+            )
 
-        string_request = json.dumps(request)
+            request = make_request(action, data, hash_obj.hexdigest())
+            string_request = json.dumps(request)
+            bytes_request = zlib.compress(string_request.encode())
 
-        sock.send(string_request.encode())
-        print('Client send data')
+            sock.send(bytes_request)
+            print('Client send data')
 
-        bytes_response = sock.recv(config.get('buffersize'))
-        print(bytes_response.decode())
-        sock.close()
     except KeyboardInterrupt:
         print('Client shutdown')
