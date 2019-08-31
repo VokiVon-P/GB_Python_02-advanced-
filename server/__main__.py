@@ -10,6 +10,7 @@ from handlers import handle_tcp_request
 from resolvers import resolve
 
 
+# функция для чтения запроса для вызова в отдельном потоке
 def read(sock, connections, requests, buffersize):
     try:
         bytes_request = sock.recv(buffersize)
@@ -18,7 +19,7 @@ def read(sock, connections, requests, buffersize):
     else:
         requests.append(bytes_request)
 
-
+# функция для записи ответа сервера для вызова в отдельном потоке
 def write(sock, connction, response):
     try:
         sock.send(response)
@@ -85,13 +86,14 @@ try:
             rlist, wlist, xlist = select.select(
                 connnections, connnections, connnections, 0
             )
-
+            # паралельная обработка запросов на чтение запросов из буфера
             for read_client in rlist:
                 read_thread = threading.Thread(target=read, daemon=True, args=(
                     read_client, connnections, requests, config.get('buffersize')
                 ))
                 read_thread.start()
-
+            
+            # паралельная обработка запросов за запись ответов сервера
             if requests:
                 bytes_request = requests.pop()
                 bytes_response = handle_tcp_request(bytes_request)
